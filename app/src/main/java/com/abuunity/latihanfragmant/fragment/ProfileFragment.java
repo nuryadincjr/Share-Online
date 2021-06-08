@@ -40,6 +40,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -91,7 +93,7 @@ public class ProfileFragment extends Fragment {
     private String imagedata;
     private Users usersdata;
     private StorageReference storageReference;
-
+    private  FirebaseFirestore firebaseFirestore;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -100,6 +102,7 @@ public class ProfileFragment extends Fragment {
 
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
         storageReference = FirebaseStorage.getInstance().getReference();
+        firebaseFirestore = FirebaseFirestore.getInstance();
         profilid = firebaseUser.getUid();
 
         String data = getContext().getSharedPreferences("PROFILE", Context.MODE_PRIVATE).getString("profileId", "none");
@@ -130,19 +133,8 @@ public class ProfileFragment extends Fragment {
         editProfile = view.findViewById(R.id.edit_profile);
 
         postsList = new ArrayList<>();
-//        postAdapter = new PostAdapter(getContext(), postsList);
-//        recyclerViewPosts.setLayoutManager(new GridLayoutManager(getContext(), 2));
-//        recyclerViewPosts.setAdapter(postAdapter);
-//
-//        savesList = new ArrayList<>();
-////        savePostAdapter = new PostAdapter(getContext(), savesList);
-//        recyclerViewSave.setLayoutManager(new GridLayoutManager(getContext(), 2));
-//        recyclerViewSave.setAdapter(savePostAdapter);
 
-//        readPosts();
-//        readSaves();
         userInfo();
-//        countsfollowersing();
         countPosts();
 
         if(profilid.equals(firebaseUser.getUid())) {
@@ -162,47 +154,37 @@ public class ProfileFragment extends Fragment {
                     startActivity(intent);
 
                 } else {
-//                    if(btnText.equals("follow")) {
-//                        FirebaseDatabase.getInstance().getReference().child("Follow").child(firebaseUser.getUid())
-//                                .child("following").child(profilid).setValue(true);
-//
-//                        FirebaseDatabase.getInstance().getReference().child("Follow").child(profilid)
-//                                .child("followers").child(firebaseUser.getUid()).setValue(true);
-//                    } else {
-//                        FirebaseDatabase.getInstance().getReference().child("Follow").child(firebaseUser.getUid())
-//                                .child("following").child(profilid).removeValue();
-//
-//                        FirebaseDatabase.getInstance().getReference().child("Follow").child(profilid)
-//                                .child("followers").child(firebaseUser.getUid()).removeValue();
-//                    }
+//                    following funciotions
                 }
             }
         });
 
-//        recyclerViewPosts.setVisibility(View.VISIBLE);
-//        recyclerViewSave.setVisibility(View.GONE);
-//
-//        postsApp.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                readPosts();
-//                saveApp.setImageResource(R.drawable.ic_bookmark);
-//                postsApp.setImageResource(R.drawable.ic_app);
-//                recyclerViewPosts.setVisibility(View.VISIBLE);
-//                recyclerViewSave.setVisibility(View.GONE);
-//            }
-//        });
-//
-//        saveApp.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
+        recyclerViewPosts.setVisibility(View.VISIBLE);
+        recyclerViewSave.setVisibility(View.GONE);
+
+        postsApp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                countPosts();
+                saveApp.setImageResource(R.drawable.ic_bookmark);
+                postsApp.setImageResource(R.drawable.ic_app);
+                recyclerViewPosts.setVisibility(View.VISIBLE);
+                recyclerViewSave.setVisibility(View.GONE);
+            }
+        });
+
+        saveApp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 //                readSaves();
-//                saveApp.setImageResource(R.drawable.ic_bookmark_fill);
-//                postsApp.setImageResource(R.drawable.ic_app_registration);
-//                recyclerViewPosts.setVisibility(View.GONE);
-//                recyclerViewSave.setVisibility(View.VISIBLE);
-//            }
-//        });
+                saveApp.setImageResource(R.drawable.ic_bookmark_fill);
+                postsApp.setImageResource(R.drawable.ic_app_registration);
+                recyclerViewPosts.setVisibility(View.GONE);
+                recyclerViewSave.setVisibility(View.VISIBLE);
+            }
+        });
+
+        countsfollowersing();
 
         return view;
     }
@@ -227,7 +209,6 @@ public class ProfileFragment extends Fragment {
 //    }
 
     private void countPosts() {
-        FirebaseFirestore firebaseFirestore = FirebaseFirestore.getInstance();
         firebaseFirestore.collection("posts")
                 .whereEqualTo("publisher", profilid).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
               @Override
@@ -242,7 +223,6 @@ public class ProfileFragment extends Fragment {
                                   postss.getImageurl(), postss.getPublisher(), postss.getToolsList(),postss.getStepsList()));
 
                       }
-
                       postAdapter = new PostAdapter(getContext(), postsList);
                       recyclerViewPosts.setLayoutManager(new GridLayoutManager(getContext(), 2));
                       recyclerViewPosts.setAdapter(postAdapter);
@@ -257,57 +237,34 @@ public class ProfileFragment extends Fragment {
                       });
                   }
               }
-
         });
-
-//        FirebaseDatabase.getInstance().getReference().child("Posts").addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                int counter = 0;
-//                for(DataSnapshot dataSnapshot : snapshot.getChildren()) {
-//                    Posts posts1 = dataSnapshot.getValue(Posts.class);
-//
-//                    if(posts1.getPublisher().equals(profilid))
-//                        counter++;
-//
-//                }
-//                posts.setText(String.valueOf(counter));
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//
-//            }
-//        });
     }
 
-//    private void countsfollowersing() {
-//        DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child("Follow").child(profilid);
-//
-//        reference.child("followers").addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                followers.setText(String.valueOf(snapshot.getChildrenCount()));
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//
-//            }
-//        });
-//
-//        reference.child("following").addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                following.setText(String.valueOf(snapshot.getChildrenCount()));
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//
-//            }
-//        });
-//    }
+    private void countsfollowersing() {
+        DocumentReference references = firebaseFirestore.collection("follows").document(firebaseUser.getUid());
+        references.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                DocumentSnapshot document = task.getResult();
+                List<String> group = (List<String>) document.get("followings");
+                if(group != null) {
+                    following.setText(String.valueOf(group.size()));
+                }
+            }
+        });
+
+        DocumentReference reference = firebaseFirestore.collection("follows").document(firebaseUser.getUid());
+        reference.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                DocumentSnapshot document = task.getResult();
+                List<String> group = (List<String>) document.get("followers");
+                if(group != null) {
+                    followers.setText(String.valueOf(group.size()));
+                }
+            }
+        });
+    }
 
     private void userInfo() {
         FirebaseFirestore firebaseFirestore = FirebaseFirestore.getInstance();
@@ -334,56 +291,8 @@ public class ProfileFragment extends Fragment {
                 }
             }
         });
-
-
-
-
-//        FirebaseDatabase.getInstance().getReference().child("Users").child(profilid).addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                Users users = snapshot.getValue(Users.class);
-//
-//                if(users.getImageUrl().equals("default")) {
-//                    imageProfil.setImageResource(R.drawable.ic_person);
-//                } else {
-//                    Picasso.get().load(users.getImageUrl()).into(imageProfil);
-//                }
-//
-//                username.setText(users.getUsername());
-//                name.setText(users.getName());
-//                bio.setText(users.getBio());
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//
-//            }
-//        });
     }
 
-//    private void readPosts() {
-//        FirebaseDatabase.getInstance().getReference().child("Posts").addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot snapshot) {
-//                postsList.clear();
-//                for(DataSnapshot dataSnapshot : snapshot.getChildren()) {
-//                    Posts posts = dataSnapshot.getValue(Posts.class);
-//
-//                    if(posts.getPublisher().equals(profilid)) {
-//                        postsList.add(posts);
-//                    }
-//                }
-//                Collections.reverse(postsList);
-//                postAdapter.notifyDataSetChanged();
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError error) {
-//
-//            }
-//        });
-//    }
-//
 //    private void readSaves() {
 //        final List<String> savesListPost = new ArrayList<>();
 //        FirebaseDatabase.getInstance().getReference().child("Saves")
@@ -484,11 +393,9 @@ public class ProfileFragment extends Fragment {
                         }
 
                         new HashtagRepository().deleteHashtags(listTag, null, ids, publishers);
-
                         if (getImagPath(filePath)==null || !getImagPath(filePath).equals("default")){
                             storageReference.child("posts/"+ids+"/"+getImagPath(filePath)).delete();
                         }
-
                         countPosts();
                         dialog1.dismiss();
                     }

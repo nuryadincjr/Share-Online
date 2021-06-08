@@ -1,5 +1,6 @@
 package com.abuunity.latihanfragmant.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -9,12 +10,16 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.abuunity.latihanfragmant.R;
 import com.abuunity.latihanfragmant.adapter.StepsDetailAdapter;
 import com.abuunity.latihanfragmant.adapter.ToolsDetailAdapter;
+import com.abuunity.latihanfragmant.api.CommentsRepository;
+import com.abuunity.latihanfragmant.pojo.Comments;
 import com.abuunity.latihanfragmant.pojo.Posts;
 import com.abuunity.latihanfragmant.pojo.Users;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -71,7 +76,7 @@ public class DetailPostActivity extends AppCompatActivity {
         Posts posts = getIntent().getParcelableExtra("posts");
 
         Picasso.get().load(posts.getImageurl()).into(imagePost);
-        description.setText(posts.getDescription().toString());
+        description.setText(posts.getDescription());
         title.setText(posts.getTitle());
 
         List<String> stepsList = new ArrayList<>(posts.getStepsList());
@@ -115,6 +120,23 @@ public class DetailPostActivity extends AppCompatActivity {
                     return true;
                 });
                 popupMenu.show();
+            }
+        });
+
+        imageComment.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(DetailPostActivity.this, CommentActivity.class);
+                intent.putExtra("postid", posts.getPostid());
+                intent.putExtra("publisher", posts.getPublisher());
+                startActivity(intent);
+            }
+        });
+
+        new CommentsRepository().getAllComment(posts.getPostid()).observe((LifecycleOwner) this, new Observer<ArrayList<Comments>>() {
+            @Override
+            public void onChanged(ArrayList<Comments> comments) {
+                commentCount.setText(String.valueOf(comments.size()));
             }
         });
 

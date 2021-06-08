@@ -126,7 +126,6 @@ public class PostActivity extends AppCompatActivity {
         close.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                startActivity(new Intent(PostActivity.this, MainActivity.class));
                 finish();
             }
         });

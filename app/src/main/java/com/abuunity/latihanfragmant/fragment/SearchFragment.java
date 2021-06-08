@@ -1,6 +1,8 @@
 package com.abuunity.latihanfragmant.fragment;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,7 +21,12 @@ import com.abuunity.latihanfragmant.adapter.HashtagAdapter;
 import com.abuunity.latihanfragmant.adapter.UsersAdapter;
 import com.abuunity.latihanfragmant.pojo.Hashtags;
 import com.abuunity.latihanfragmant.pojo.Users;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.hendraanggrian.appcompat.widget.SocialAutoCompleteTextView;
 
 import java.util.ArrayList;
@@ -32,6 +39,7 @@ public class SearchFragment extends Fragment {
     private FirebaseFirestore firebaseFirestore;
     private RecyclerView recyclerViewUsers;
     private ArrayList<Users> usersArrayList;
+    private  UsersAdapter usersAdapter;
 
     private HashtagAdapter hashtagAdapter;
     private RecyclerView recyclerViewTags;
@@ -72,6 +80,21 @@ public class SearchFragment extends Fragment {
             }
         });
 
+        searchBar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                searchUsers(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
         return view;
     }
 
@@ -83,13 +106,11 @@ public class SearchFragment extends Fragment {
 //    }
 
     private void getHastags() {
-//        refreshLayout.setRefreshing(true);
         mainviewmodel = new ViewModelProvider(this).get(MainViewModel.class);
 
         mainviewmodel.getHashTagsMutableLiveData().observe(getViewLifecycleOwner(), new Observer<ArrayList<Hashtags>>() {
             @Override
             public void onChanged(ArrayList<Hashtags> hashtags) {
-//                refreshLayout.setRefreshing(false);
                 hashtagsArrayList.clear();
                 hashtagsArrayList.addAll(hashtags);
                 loadHastags();
@@ -118,9 +139,29 @@ public class SearchFragment extends Fragment {
     }
 
     private void loadsUsers() {
-        UsersAdapter usersAdapter = new UsersAdapter(usersArrayList);
+        usersAdapter = new UsersAdapter(usersArrayList);
         recyclerViewUsers.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerViewUsers.setAdapter(usersAdapter);
         recyclerViewUsers.setItemAnimator(new DefaultItemAnimator());
     }
+
+    private void searchUsers(String s) {
+
+        CollectionReference cities = firebaseFirestore.collection("users");
+        Query query = cities.orderBy("username").startAt(s).endAt(s + "\uf8ff");
+
+        query.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                usersArrayList.clear();
+                for(DocumentSnapshot dataSnapshot : queryDocumentSnapshots.getDocuments()) {
+                    Users users = dataSnapshot.toObject(Users.class);
+                    usersArrayList.add(users);
+                }
+                usersAdapter.notifyDataSetChanged();
+            }
+        });
+    }
+
+
 }

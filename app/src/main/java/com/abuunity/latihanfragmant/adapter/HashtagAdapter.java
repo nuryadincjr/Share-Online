@@ -69,4 +69,5 @@ public class HashtagAdapter extends RecyclerView.Adapter<HashtagAdapter.ViewHold
                 itemClickListener.onClick(v, getAdapterPosition());
         }
     }
+
 }

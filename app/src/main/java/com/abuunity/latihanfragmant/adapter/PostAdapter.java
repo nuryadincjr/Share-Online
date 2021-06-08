@@ -25,8 +25,18 @@ import com.abuunity.latihanfragmant.pojo.Comments;
 import com.abuunity.latihanfragmant.pojo.Posts;
 import com.abuunity.latihanfragmant.pojo.Users;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.textview.MaterialTextView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -34,13 +44,17 @@ import com.hendraanggrian.appcompat.widget.SocialTextView;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
     private Context context;
     private List<Posts> postsList;
+    private FirebaseUser firebaseUser;
     private ItemClickListener itemClickListener;
+    private FirebaseFirestore firebaseFirestore;
 
     public PostAdapter(Context context, List<Posts> postsList) {
         this.context = context;
@@ -56,12 +70,16 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        firebaseFirestore = FirebaseFirestore.getInstance();
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
         Posts posts = postsList.get(position);
         holder.setListeners();
         Picasso.get().load(posts.getImageurl()).into(holder.imagePost);
         holder.title.setText(posts.getTitle());
         holder.description.setText(posts.getDescription());
+
+        isLiked(posts.getPostid(), holder.imageLike, holder.likeCount);
 
         FirebaseFirestore firebaseFirestore = FirebaseFirestore.getInstance();
         firebaseFirestore.collection("users")
@@ -122,6 +140,25 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             }
         });
 
+        holder.imageLike.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                likes(posts.getPostid(), FieldValue.arrayUnion(firebaseUser.getUid()));
+                holder.imageLike.setImageResource(R.drawable.ic_love_fill);
+                holder.imageLike.setTag("liked");
+//
+//                 if(holder.imageLike.getTag().equals("liked")) {
+//                    likes(posts.getPostid(), FieldValue.arrayRemove(firebaseUser.getUid()));
+//                    holder.imageLike.setImageResource(R.drawable.ic_love);
+//                    holder.imageLike.setTag("like");
+//                }else {
+//                    likes(posts.getPostid(), FieldValue.arrayUnion(firebaseUser.getUid()));
+//                    holder.imageLike.setImageResource(R.drawable.ic_love_fill);
+//                    holder.imageLike.setTag("liked");
+//                }
+            }
+        });
+
 
     }
 
@@ -178,5 +215,46 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
                 itemClickListener.onClick(v,getAdapterPosition());
             }
         }
+    }
+
+    public void likes(String postid, Object optionuid) {
+        DocumentReference references = firebaseFirestore.collection("likes").document(postid);
+        references.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                if (documentSnapshot.exists()) {
+                    references.update("Likes", optionuid);
+
+                } else {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("Likes", optionuid);
+                    references.set(map);
+                }
+            }
+        });
+    }
+
+    private void isLiked(final String postid, final ImageView imageLike, TextView likeCount) {
+
+        DocumentReference references = firebaseFirestore.collection("likes").document(postid);
+        references.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    Map<String, Object> i = task.getResult().getData();
+                    DocumentSnapshot documents = task.getResult();
+
+                    if (i != null) {
+                        likeCount.setText(String.valueOf(i.size()));
+                        imageLike.setImageResource(R.drawable.ic_love_fill);
+                        imageLike.setTag("liked");
+                    } else {
+//                        likeCount.setText(String.valueOf(0));
+//                        imageLike.setImageResource(R.drawable.ic_love);
+//                        imageLike.setTag("like");
+                    }
+                }
+            }
+        });
     }
 }
